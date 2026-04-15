@@ -6,6 +6,8 @@ import { performConflictCheck } from "@/lib/supabase/queries";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { calculateServiceDeadline } from "@/utils/nyLawValidators";
+import { toast } from "sonner";
+import { createNewNYCase } from "@/lib/supabase/queries";
 
 
 // 1. Define the type clearly at the top (outside the component)
@@ -19,6 +21,7 @@ export function NewCaseSheet() {
   const [conflict, setConflict] = useState<ConflictResult | null>(null);
   const [dateFiled, setDateFiled] = useState("");
   const [deadlinePreview, setDeadlinePreview] = useState("");
+  const [selectedGrounds, setSelectedGrounds] = useState(""); // Add state for selected grounds
 
   const handleNameSearch = async (name: string) => {
     if (name.length > 3) {
@@ -36,6 +39,34 @@ export function NewCaseSheet() {
       setDeadlinePreview(deadline);
     }
   }; 
+
+  const handleSaveCase = async () => {
+    try {
+      const caseData = {
+        case_number: `MAT-${Date.now().toString().slice(-6)}`, // Temporary index generator
+        grounds: selectedGrounds,
+        status: 'intake',
+      };
+  
+      await createNewNYCase(caseData, deadlinePreview);
+  
+      // 1. Success Notification
+      toast.success("Case file created successfully.");
+  
+      // 2. The Legal "Automatic Orders" Warning
+      toast.error("Action Required: Automatic Orders", {
+        description: "Under NY DRL §236, the plaintiff is now bound by Automatic Orders. You must serve the notice on the defendant immediately.",
+        duration: 10000, // Keep it visible for 10 seconds
+        action: {
+          label: "Download Notice",
+          onClick: () => window.open('/templates/ny-automatic-orders.pdf', '_blank'),
+        },
+      });
+  
+    } catch (error) {
+      toast.error("Failed to create case. Please check database logs.");
+    }
+  };
   
 
    
@@ -72,7 +103,10 @@ export function NewCaseSheet() {
           {/* Section 2: Grounds */}
           <div className="space-y-2">
             <label className="text-sm font-semibold">Grounds for Divorce (NY DRL §170)</label>
-            <select className="w-full border p-2 rounded-md bg-white">
+            <select className="w-full border p-2 rounded-md bg-white"
+              value={selectedGrounds} // Bind to state
+              onChange={(e) => setSelectedGrounds(e.target.value)} // Update state on change
+            > 
               <option value="170.7">Irretrievable Breakdown (No-fault)</option>
               <option value="170.1">Cruel and Inhuman Treatment</option>
               <option value="170.2">Abandonment (1 Year+)</option>
@@ -83,6 +117,7 @@ export function NewCaseSheet() {
           <button 
             disabled={conflict?.hasConflict}
             className="w-full bg-slate-900 text-white py-3 rounded-lg font-bold disabled:bg-slate-300"
+            onClick={handleSaveCase} // Add onClick to trigger save
           >
             Open Case File
           </button>
