@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { performConflictCheck } from "@/lib/supabase/queries";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { calculateServiceDeadline } from "@/utils/nyLawValidators";
 
 
 // 1. Define the type clearly at the top (outside the component)
@@ -16,6 +17,8 @@ type ConflictResult = {
 
 export function NewCaseSheet() {
   const [conflict, setConflict] = useState<ConflictResult | null>(null);
+  const [dateFiled, setDateFiled] = useState("");
+  const [deadlinePreview, setDeadlinePreview] = useState("");
 
   const handleNameSearch = async (name: string) => {
     if (name.length > 3) {
@@ -25,6 +28,17 @@ export function NewCaseSheet() {
       setConflict(null); // Clear warning if they delete the text
     }
   };
+
+  const handleDateChange = (date: string) => {
+    setDateFiled(date);
+    if (date) {
+      const deadline = calculateServiceDeadline(date);
+      setDeadlinePreview(deadline);
+    }
+  }; 
+  
+
+   
 
   return (
     <Sheet>
@@ -72,6 +86,32 @@ export function NewCaseSheet() {
           >
             Open Case File
           </button>
+        </div>
+        <div className="space-y-4 pt-4 border-t">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">Date Filed (Summons with Notice)</label>
+            <input 
+              type="date" 
+              className="w-full border p-2 rounded-md"
+              onChange={(e) => handleDateChange(e.target.value)}
+            />
+          </div>
+    
+          {deadlinePreview && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+              <p className="text-xs text-amber-800 font-semibold uppercase tracking-wider">
+                CPLR 306-b Deadline
+              </p>
+              <p className="text-lg font-bold text-amber-900">
+                {new Date(deadlinePreview).toLocaleDateString('en-US', { 
+                  month: 'long', day: 'numeric', year: 'numeric' 
+                })}
+              </p>
+              <p className="text-xs text-amber-700 mt-1">
+                Service must be completed and affidavit filed by this date.
+              </p>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>

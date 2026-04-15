@@ -51,3 +51,31 @@ export async function getAttorneyDashboardData() {
   if (error) throw error;
   return cases;
 }
+
+
+export async function createNewNYCase(caseData: any, deadlineDate: string) {
+  const supabase = createClient(await cookies());
+
+  // 1. Create the Case
+  const { data: newCase, error: caseError } = await supabase
+    .from('cases')
+    .insert([caseData])
+    .select()
+    .single();
+
+  if (caseError) throw caseError;
+
+  // 2. Automatically create the 120-Day Deadline task
+  const { error: deadlineError } = await supabase
+    .from('deadlines')
+    .insert([{
+      case_id: newCase.id,
+      title: 'Service of Process (120-Day Rule)',
+      due_date: deadlineDate,
+      completed: false
+    }]);
+
+  if (deadlineError) throw deadlineError;
+
+  return newCase;
+}
