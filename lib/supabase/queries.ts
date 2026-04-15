@@ -11,13 +11,14 @@ export async function performConflictCheck(name: string) {
 
   if (error) {
     console.error("Conflict check failed:", error);
-    return { conflict: false, error };
+    return { hasConflict: false, matches: [], error };
   }
 
   // If data has length, we found someone with a similar name!
   return {
-    hasConflict: !!data?.length,
-    matches: data || []
+    hasConflict: (data?.length ?? 0) > 0,
+    matches: data || [],
+    error: null
   };
 }
 
