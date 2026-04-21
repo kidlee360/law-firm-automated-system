@@ -79,3 +79,27 @@ export async function createNewNYCase(caseData: any, deadlineDate: string) {
 
   return newCase;
 }
+
+
+// lib/supabase/queries.ts
+
+export async function saveCaseAssets(caseId: string, assets: any[]) {
+  const supabase = createClient(await cookies());
+
+  // Map the UI state to the database column names
+  const assetsToInsert = assets.map(asset => ({
+    case_id: caseId,
+    asset_type: asset.type,
+    description: asset.desc,
+    estimated_value: asset.value,
+    is_marital_property: true // Default for intake
+  }));
+
+  const { data, error } = await supabase
+    .from('assets')
+    .insert(assetsToInsert)
+    .select();
+
+  if (error) throw error;
+  return data;
+}

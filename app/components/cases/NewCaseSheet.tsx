@@ -7,7 +7,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { calculateServiceDeadline } from "@/utils/nyLawValidators";
 import { toast } from "sonner";
-import { createNewNYCase } from "@/lib/supabase/queries";
+import { createNewNYCase, saveCaseAssets } from "@/lib/supabase/queries";
+import { AssetTracker } from "../intake/AssetTracker";
 
 
 // 1. Define the type clearly at the top (outside the component)
@@ -22,6 +23,7 @@ export function NewCaseSheet() {
   const [dateFiled, setDateFiled] = useState("");
   const [deadlinePreview, setDeadlinePreview] = useState("");
   const [selectedGrounds, setSelectedGrounds] = useState(""); // Add state for selected grounds
+  const [assets, setAssets] = useState<any[]>([]);
 
   const handleNameSearch = async (name: string) => {
     if (name.length > 3) {
@@ -48,7 +50,12 @@ export function NewCaseSheet() {
         status: 'intake',
       };
   
-      await createNewNYCase(caseData, deadlinePreview);
+      const newCase = await createNewNYCase(caseData, deadlinePreview);
+  
+      // Save assets if any
+      if (assets.length > 0) {
+        await saveCaseAssets(newCase.id, assets);
+      }
   
       // 1. Success Notification
       toast.success("Case file created successfully.");
@@ -114,6 +121,11 @@ export function NewCaseSheet() {
             </select>
           </div>
 
+          {/* Section 3: Marital Assets */}
+          <div>
+            <AssetTracker onChange={(data) => setAssets(data)} />
+          </div>
+
           <button 
             disabled={conflict?.hasConflict}
             className="w-full bg-slate-900 text-white py-3 rounded-lg font-bold disabled:bg-slate-300"
@@ -131,7 +143,7 @@ export function NewCaseSheet() {
               onChange={(e) => handleDateChange(e.target.value)}
             />
           </div>
-    
+        
           {deadlinePreview && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
               <p className="text-xs text-amber-800 font-semibold uppercase tracking-wider">
