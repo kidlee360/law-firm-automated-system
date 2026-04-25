@@ -1,6 +1,6 @@
 "use client";
 import { PDFDownloadLink } from '@react-pdf/renderer';
-import { NetWorthPDF } from '../docs/NetWorthPdf';
+import { NetWorthPDF } from '../docs/NetWorthPDF';
 import { FileDown } from 'lucide-react';
 
 export function DownloadCaseFiles({ caseData, assets }: any) {

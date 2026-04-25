@@ -24,7 +24,7 @@ export async function performConflictCheck(name: string) {
 
 
 export async function getAttorneyDashboardData() {
-  const supabase = await createClient(await cookies());
+  const supabase = createClient(await cookies());
 
   const { data: cases, error } = await supabase
     .from('cases')
